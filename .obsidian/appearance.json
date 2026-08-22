@@ -1,0 +1,7 @@
+{
+  "cssTheme": "Border",
+  "accentColor": "#5c96f5",
+  "enabledCssSnippets": [
+    "custom-colors"
+  ]
+}

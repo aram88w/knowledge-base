@@ -1,0 +1,226 @@
+{
+  "main": {
+    "id": "276bfd49c7295bf4",
+    "type": "split",
+    "children": [
+      {
+        "id": "3a75632a9523e26f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a1f832aca0de9851",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "보안/웹해킹/PortSwigger/Server-side/01-SQL-인젝션.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "01-SQL-인젝션"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "1584018352151b45",
+    "type": "split",
+    "children": [
+      {
+        "id": "7439333285b2724b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "7880368e299dec09",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "byCreatedTimeReverse",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "파일 탐색기"
+            }
+          },
+          {
+            "id": "cf3ca5433f8d0611",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "검색"
+            }
+          },
+          {
+            "id": "b8e342f86f11eee5",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "북마크"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 252.31640625
+  },
+  "right": {
+    "id": "a1f68c3220402a2f",
+    "type": "split",
+    "children": [
+      {
+        "id": "589dbc809712a3b6",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9c7f71fe40f3f898",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "프로젝트/extract-frame/회고.md",
+                "collapseAll": true,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "회고 의 백링크"
+            }
+          },
+          {
+            "id": "3a7624ec07543f6c",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "백엔드/스프링 교과서/새로운 빈 추가.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "새로운 빈 추가 의 나가는 링크"
+            }
+          },
+          {
+            "id": "570c3d6a6f33f7db",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "태그"
+            }
+          },
+          {
+            "id": "4458de12380da940",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "보안/웹해킹/PortSwigger/Server-side/01-SQL-인젝션.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "개요"
+            }
+          },
+          {
+            "id": "073a7c3a8315139b",
+            "type": "leaf",
+            "state": {
+              "type": "quiet-outline",
+              "state": {},
+              "icon": "lines-of-text",
+              "title": "Quiet Outline"
+            }
+          }
+        ],
+        "currentTab": 4
+      }
+    ],
+    "direction": "horizontal",
+    "width": 200
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "bases:새 베이스 생성하기": true,
+      "switcher:빠른 전환기 열기": false,
+      "graph:그래프 뷰 열기": false,
+      "canvas:새 캔버스 만들기": false,
+      "daily-notes:오늘의 일일 노트 열기": false,
+      "templates:템플릿 삽입": false,
+      "command-palette:명령어 팔레트 열기": false
+    }
+  },
+  "active": "a1f832aca0de9851",
+  "lastOpenFiles": [
+    "보안/웹해킹/PortSwigger/Server-side/15-웹-캐시-기만.md",
+    "보안/웹해킹/PortSwigger.md",
+    "보안/웹해킹/PortSwigger/Server-side/14-서버-측-파라미터-오염.md",
+    "보안/웹해킹/PortSwigger/Server-side/13-API-테스트.md",
+    "보안/웹해킹/PortSwigger/Server-side/12-NoSQL-인젝션.md",
+    "보안/웹해킹/PortSwigger/Server-side/11-XXE.md",
+    "보안/웹해킹/PortSwigger/Server-side/10-SSRF.md",
+    "보안/웹해킹/PortSwigger/Server-side/09-경쟁-상태.md",
+    "보안/웹해킹/PortSwigger/Server-side/08-웹서버-보안.md",
+    "보안/웹해킹/PortSwigger/Server-side/07-접근제어.md",
+    "보안/웹해킹/PortSwigger/Server-side/06-정보-노출-취약점.md",
+    "보안/웹해킹/PortSwigger/Server-side/05-비즈니스-로직-취약점.md",
+    "보안/웹해킹/PortSwigger/Server-side/03-경로탐색.md",
+    "보안/웹해킹/PortSwigger/Server-side/04-OS-명령어주입.md",
+    "보안/웹해킹/PortSwigger/Server-side/02-인증취약점.md",
+    "보안/웹해킹/PortSwigger/Server-side/무제 1.md",
+    "보안/웹해킹/PortSwigger/Server-side/01-SQL-인젝션.md",
+    "보안/웹해킹/PortSwigger/Server-side/02-",
+    "보안/웹해킹/PortSwigger/Server-side",
+    "보안/웹해킹/PortSwigger",
+    "기술/인프라/SEO.md",
+    "프로젝트/ytmetronome/일일 노트/2026-05-09~05-12 구글 크레딧.md",
+    "프로젝트/ytmetronome/회고.md",
+    "프로젝트/ytmetronome/일일 노트/2026-04-23.md",
+    "프로젝트/extract-frame/회고.md",
+    "프로젝트/ytmetronome/일일 노트/2026-04-24.md",
+    "프로젝트/ytmetronome/일일 노트/2026-05-28.md",
+    "프로젝트/ytmetronome/일일 노트/2026-05-27.md",
+    "프로젝트/ytmetronome/일일 노트/2026-05-21.md",
+    "보안/웹해킹",
+    "보안",
+    "프로젝트/ytmetronome/일일 노트",
+    "무제.base",
+    "프로젝트/ytmetronome",
+    "무제 1.base",
+    "기술/인프라/무제",
+    "기타/무제.canvas",
+    "무제.canvas",
+    "무제 1.canvas"
+  ]
+}
