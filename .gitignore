@@ -8,5 +8,8 @@ Thumbs.db
 .obsidian/cache/
 .obsidian/graph.json
 
+**/*state*.json
+.obsidian/plugins/**/data.json
+
 # (선택) 동기화 충돌을 방지하기 위한 임시 파일
 *.tmp
