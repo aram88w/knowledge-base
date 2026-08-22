@@ -1,0 +1,12 @@
+# OS 생성 파일
+.DS_Store
+Thumbs.db
+
+# 실시간으로 변경되어 커밋을 어지럽히는 옵시디언 UI/캐시 파일 (필수 제외)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache/
+.obsidian/graph.json
+
+# (선택) 동기화 충돌을 방지하기 위한 임시 파일
+*.tmp
