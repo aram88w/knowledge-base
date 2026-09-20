@@ -152,7 +152,7 @@ csrf=50FaWgdOhi9M9wyna8taR1k3ODOR8d6u&email=example@normal-website.com
 
 #### 우회
 
-##### 토큰이 누락된 경우
+##### 토큰이 필요 없는 경우
 
 일부 애프리케이션은 토큰이 존재할 때 올바르게 작동하지만 토큰이 누락(단순 값뿐만 아니라 전체 파라미터)된 경우 검증을 안하고 넘어갈 수도 있음. 
 
@@ -354,5 +354,51 @@ if (redirectUrl) {
 SameSite는 eTLD+1를 기준으로 판단함. 즉 `victim.com`과 `attacker.victim.com`은 same-site임. 
 `victim.com`은 철저히 방어가 되고 있어도 eTLD+1에 속한 다른 서브도메인이 취약하다면 공격이 가능함. 
 - 예: `attacker.victim.com`에서 XSS로 JS를 실행해서 `victim.com`으로 요청을 보내서 CSRF 공격
+
+
+
+### Referer 헤더 
+
+HTTP Referer 헤더는 요청을 보내게 된 이전 웹페이지의 URL을 담는 요청 헤더임. 일반적으로는 사용자가 HTTP 요청을 트리거할 때 브라우저가 자동으로 추가하지만 사용자가 숨기거나 수정하는 방법이 존재함. 
+일부 애플리케이션은 CSRF 공격을 방어하는 로직으로 Referer 헤더를 사용하는데 이는 일반적으로 덜 효과적으로 우회될 가능성이 큼. 
+
+
+**Referer 헤더가 필요없는 경우**
+Referer 헤더가 존재할 때는 유효성 검사를 수행하지만 헤더가 누락된 경우 검사를 건너뜀. 
+HTML 페이지에 META 태그를 사용하면 Referer 헤더를 제거할 수 있음. 
+
+``` html 
+<html>
+  <meta name="referrer" content="never">
+  <body>
+    <form method="POST" action="https://target.com/my-account/change-email">
+      <input type="hidden" name="email" value="test1234@gmail.com">
+    </form>
+  </body>
+  <script>
+    document.forms[0].submit()
+  </script>
+</html>
+```
+
+
+**특정 도메인 이름으로 시작 하는지만 검사하는 경우**
+
+공격자는 자신의 서버의 하위 도메인을 이용해서 조작할 수 있음. 
+``` url
+http://target.com.attacker-website.com/csrf-attack
+```
+
+**특정 도메인 이름을 포함 하는지만 검사하는 경우**
+공격자는 자신의 서버의 쿼리파라미터 등을 통해서 조작할 수 있음. 
+``` url
+http://target.com/csrf-attack?vulnerable-website.com
+```
+
+혹은 `history.pushState("", "", "/?target.com");`를 사용하여 현재 주소창의 URL을 수정할 수 있음. (바뀐 URL로 Referer 헤더에 들어감.)
+
+브라우저가 기본적으로 Referer 헤더의 쿼리 문자열을 제거하기 때문에 `Referrer-Policy: unsafe-url`를 추가하여 쿼리 문자열이 제거되지 않게 해야함. (방법 2가지)
+- 본인의 서버에서 HTTP 헤더로 `Referrer-Policy: unsafe-url`를 추가
+- 폼 제출을 할때 `<meta name="referrer" content="unsafe-url" />`를 추가
 
 
