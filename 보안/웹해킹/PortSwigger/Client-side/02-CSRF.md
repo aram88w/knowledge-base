@@ -48,6 +48,22 @@ https://bank.com/email/change?email=pwned@evil-user.net
 
 최신 브라우저 규칙: `SameSite=Lax`가 기본값인 경우가 많음. (cross-site POST에서는 쿠키 미전송)
 
+#### Site
+
+- 목적: 브라우저가 다른 사이트로 가는 요청에 쿠키를 자동으로 실어 보낼 것인가
+- `same-site`: eTLD(최상위 도메인)+1 (스키마는 동일해야함.)
+- `cross-site`: `same-site`가 아닌 경로
+
+![[Pasted image 20260919173735.png]]
+
+
+| URL A                 | URL B                      | same-site?    |
+| --------------------- | -------------------------- | ------------- |
+| `https://example.com` | `https://api.example.com`  | ✅             |
+| `https://example.com` | `http://example.com`       | ❌ (schema 다름) |
+| `https://example.com` | `https://example.com:8080` | ✅ (port 무시)   |
+| `https://example.com` | `https://evil.com`         | ❌             |
+
 #### Origin
 
 - 목적: 자바스크립트가 다른 출처의 리소스를 읽을 수 있는가
@@ -61,39 +77,21 @@ https://bank.com/email/change?email=pwned@evil-user.net
 | `https://example.com`   | `https://example.com:8080` | ❌ (port 다름)   |
 | `https://example.com`   | `https://api.example.com`  | ❌ (host 다름)   |
 
-
-#### Site
-
-- 브라우저가 다른 사이트로 가는 요청에 쿠키를 자동으로 실어 보낼 것인가
-- `same-site`: 돈 주고 산 진짜 대표 주소(소유 도메인)가 같은 경로
-- `cross-site`: `same-site`가 아닌 경로
-
-| URL A                 | URL B                      | same-site?    |
-| --------------------- | -------------------------- | ------------- |
-| `https://example.com` | `https://api.example.com`  | ✅             |
-| `https://example.com` | `http://example.com`       | ✅ (scheme 무시) |
-| `https://example.com` | `https://example.com:8080` | ✅ (port 무시)   |
-| `https://example.com` | `https://evil.com`         | ❌             |
+![[Pasted image 20260919173958.png]]
 
 
-#### SameSite 쿠키 속성
+#### Site vs Origin
 
-| 값        | 같은 사이트 요청 | cross-site top-level GET | cross-site POST / iframe / AJAX |
-| -------- | --------- | ------------------------ | ------------------------------- |
-| `Strict` | 전송        | 미전송                      | 미전송                             |
-| `Lax`    | 전송        | 전송                       | 미전송                             |
-| `None`   | 전송        | 전송                       | 전송 (`Secure` 필수)                |
-- top-level: 주소 표시줄의 URL이 바뀌는 네비게이션 
-	- 예: 링크 클릭, 주소 입력, 폼 제출, 리다이렉트 
-- subresouce: 주소 표시줄의 URL이 바뀌지 않고 페이지 안에 존재
-	- 예: `<img>`, `<iframe>`, `fetch()`, `<script>`, `<link>`
+`Same-Origin`이면 무조건 `Same-Site`임. 하지만 `Same-Site`라고 해서 무조건 `Same-Origin`인 것은 아님. (서브도메인이 다르거나 포트가 다를 수 있으므로)
 
-1. `SameSite=Strict`: 가장 보안이 강함. 외부 사이트에서 `bank.com` 링크를 클릭해도 쿠키가 안감. (사용자 입장에서 로그인이 안 되어있음.) UX가 불편할 수 있음. 
-2. `SameSite=Lax`: **현대 브라우저의 기본값**
-	- 같은 사이트 요청: 쿠키 전송
-	- 외부 클릭 GET 요청: 쿠키 전송
-	- 외부 사이트에서 보내는 POST, iframe, AJAX, img 요청: 쿠키 미전송
-3. `SameSite=None`: cross-site 요청에도 쿠키를 보냄. 
+| 요청 1                      | 요청 2                           | 동일 사이트 (Same-Site)? | 동일 출처 (Same-Origin)? |
+| :------------------------ | :----------------------------- | :------------------ | :------------------- |
+| `https://example.com`     | `https://example.com`          | ✅                   | ✅                    |
+| `https://app.example.com` | `https://intranet.example.com` | ✅                   | ❌ (도메인 이름 불일치)       |
+| `https://example.com`     | `https://example.com:8080`     | ✅                   | ❌ (포트 불일치)           |
+| `https://example.com`     | `https://example.co.uk`        | ❌ (eTLD 불일치)        | ❌ (도메인 이름 불일치)       |
+| `https://example.com`     | `http://example.com`           | ❌ (스키마 불일치)         | ❌ (스키마 불일치)          |
+
 
 
 ### XSS vs CSRF 
@@ -154,11 +152,13 @@ csrf=50FaWgdOhi9M9wyna8taR1k3ODOR8d6u&email=example@normal-website.com
 
 #### 우회
 
-**토큰이 누락된 경우**
+##### 토큰이 누락된 경우
+
 일부 애프리케이션은 토큰이 존재할 때 올바르게 작동하지만 토큰이 누락(단순 값뿐만 아니라 전체 파라미터)된 경우 검증을 안하고 넘어갈 수도 있음. 
 
 
-**요청 메서드에 따라 다른 경우**
+##### 요청 메서드에 따라 다른 경우
+
 일부 애플리케이션에서는 POST 메서드에서는 토큰을 검증하지만 GET 메서드를 사용하면 검증을 생략하는 경우가 있음. 
 - GET/POST 둘 다 열어놓고 실수로 POST에서만 검증하도록 작성하는 경우
 - POST만 열어놓으려고 했는데 GET도 동작하는 경우
@@ -182,12 +182,14 @@ Cookie: session=2yQIDcpia41WrATfjPqvm9tOkDvkMvLm
 ```
 
 
-**토큰이 사용자 세션과 연결되지 않은 경우**
+##### 토큰이 사용자 세션과 연결되지 않은 경우
+
 일부 애플리케이션은 요청을 하는 사용자 세션에 속하는 토큰인지 확인하지 않고 유효한 토큰을 통째로 관리함. 
 공격자는 자신의 CSRF 토큰을 피해자의 요청에 넣어서 공격할 수 있음. 
 
 
-**세션 쿠키와 연결되어 있는 경우**
+##### 세션 쿠키와 연결되어 있는 경우
+
 세션 관리와 CSRF 보호에서 서로 다른 프레임워크를 사용하는 경우 CSRF 토큰이 세션에 연결되지 않고 다른 CSRF 관련 쿠키와 연결되어 있음. 
 ``` http
 POST /email/change HTTP/1.1
@@ -230,7 +232,8 @@ Set-Cookie: csrfKey={유효한쿠키}; SameSite=None; Secure; Secure; HttpOnly
 ```
 
 
-**쿠키와 요청 매개변수의 토큰이 일치하는지 확인하는 경우**
+##### 쿠키와 요청 매개변수의 토큰이 일치하는지 확인하는 경우
+
 일부 애플리케이션은 쿠키와 요청 매개변수에 각각 동일한 CSRF 토큰을 담기도록 하고 두 토큰이 동일한지만 확인해서 검증함. 
 서버에서는 토큰에 대한 데이터를 저장하지 않고 오직 쿠키와 요청 매개변수의 값만 비교함. 
 
@@ -245,5 +248,111 @@ csrf=R8ov2YBfTYmzFyjit8o2hKBuoIjXXVpa&email=wiener@normal-user.com
 ```
 
 만약 웹사이트에 **공격자가 피해자의 브라우저의 쿠키를 설정할 수 있는 취약점**이 있다면 공격자는 피해자의 브라우저의 쿠키를 임의로 바꾸고 요청 매개변수에 동일한 값을 넣어서 공격할 수 있음. 
+
+
+### SameSite
+
+SameSite는 브라우저 보안 기능으로 다른 웹사이트에서 발생하는 요청에 웹사이트의 쿠키를 포함할지 말지를 결정함. CSRS, XSS, 일부 CORS 공격 등을 보호할 수 있음. 
+
+HTTP 응답에 `SameSite` 속성을 추가하면 설정할 수 있음. 
+``` http
+Set-Cookie: session=0F8tgdOhi9ynR1M9wa3ODa; SameSite=Strict
+```
+
+| 값        | 같은 사이트 요청 | cross-site top-level GET | cross-site POST / iframe / AJAX |
+| -------- | --------- | ------------------------ | ------------------------------- |
+| `Strict` | 전송        | 미전송                      | 미전송                             |
+| `Lax`    | 전송        | 전송                       | 미전송                             |
+| `None`   | 전송        | 전송                       | 전송 (`Secure` 필수)                |
+- top-level: 주소 표시줄의 URL이 바뀌는 네비게이션 
+	- 예: 링크 클릭, 주소 입력, 폼 제출, 리다이렉트 
+- subresouce: 주소 표시줄의 URL이 바뀌지 않고 페이지 안에 존재
+	- 예: `<img>`, `<iframe>`, `fetch()`, `<script>`, `<link>`
+
+**Strict**
+`SameSite=Strict`는 가장 보안이 강한 설정임. 외부 사이트에서 `bank.com` 링크를 클릭해도 쿠키를 포함시키지 않음. 
+사용자 입장에서는 다른 사이트에서 `bank.com` 링크를 타고 들어갔을때 UX가 불편할 수 있음. (로그인이 안 되어있음.)
+
+**Lax**
+`SameSite=Lax`는 **현대 브라우저의 기본값**임.
+- 같은 사이트 요청: 쿠키 전송
+- 외부 클릭 GET 요청: 쿠키 전송
+- 외부 사이트에서 보내는 POST, iframe, AJAX, img 요청: 쿠키 미전송
+
+**None**
+`SameSite=None`은 SameSite 설정을 비활성화 하는 것임. 해당 웹사이트에 대한 모든 요청(cross-site 포함)에 쿠키가 적용됨. 
+``` http
+Set-Cookie: trackingId=...; SameSite=None; Secure
+```
+- `Secure` 속성을 필수적으로 포함해야함. 
+- 쿠키가 제3자 환경에서 설정 되어야하는 경우에 사용함. 예: 추적 쿠키
+
+
+#### 우회
+
+먼저 세션 등의 쿠키가 처음 발급될 때 `SameSite`가 무엇으로 설정됐는지 확인해야함. 아무 설정도 없다면 `SameSite=Lax`임.
+
+##### GET 요청으로 우회
+
+만약 `SameSite=Lax`이고 GET도 열어둔 경우, GET으로 바꿔서 요청이 가능함. 
+``` html
+<script>
+    document.location = 'https://example.com/email/change?email=pwned@evil-user.net';
+</script>
+```
+
+
+##### `_method` 사용
+
+일부 프레임워크(Ruby on Rails, PHP Laravel, PHP Symfony, Node.js Express)에서는 폼에서 `_method`를 지원하는데 이 필드에 넣은 HTTP 메서드로 서버에서 처리를 함. 
+
+``` http 
+<form action="https://example.com/account/transfer-payment" method="GET">
+    <input type='hidden' name='_method' value='POST'>
+    <input type='hidden' name='email' value='test1234@gmail.com'>
+</from>
+<script>document.forms[0].submit()</script>
+```
+- `form`의 `method`는 GET이라서 `SameSite=Lax`에서는 쿠키를 적용시킴. 
+- `_method` 필드 때문에 서버에서는 POST로 처리됨. 
+
+
+##### 클라이언트 측 리다이렉션
+
+`SameSite=Strict`가 설정되어 있는 경우에는 다른 사이트에서의 요청에는 쿠키를 포함하지 않으므로 클라이언트 측 리다이렉션 방법을 사용해야함. 
+
+1. 타켓 사이트에 클라이언트 측 리다이렉션 취약점이 있어야함. (즉, 공격자가 원하는 URL로 리다이렉트 시킬 수 있어야함.)
+	- 예: DOM 기반 오픈 리다이렉션
+2. 리다이렉션 URL GET 요청으로 상태 변경을 할 수 있어야함. 
+	- 예: 이메일 변경, 송금 등
+
+예시 코드 
+``` js
+// victim.com의 페이지 코드 (취약한 부분)
+const urlParams = new URLSearchParams(window.location.search);
+const redirectUrl = urlParams.get('redirect');
+if (redirectUrl) {
+    window.location = redirectUrl; // 클라이언트 측 리다이렉션
+}
+```
+
+공격 스크립트
+``` html
+<script>
+    document.location = 'https://target.com/?redirect=/my-account/change-email?email=attacker@evil.com';
+</script>
+```
+
+
+참고
+클라이언트 측 리다이렉션은 실제로는 리다이렉션이 아니라 동일한 도메인에서 발생하는 일반적인 요청으로 처리됨. 
+서버 측 리다이렉션(302 응답)도 공격이 가능하지만 리다이렉션으로 취급되기 때문에 쿠키 갱신 시점이 스펙/브라우저마다 다를 수 있음. 
+
+
+##### 취약한 상위 도메인 활용
+
+SameSite는 eTLD+1를 기준으로 판단함. 즉 `victim.com`과 `attacker.victim.com`은 same-site임. 
+`victim.com`은 철저히 방어가 되고 있어도 eTLD+1에 속한 다른 서브도메인이 취약하다면 공격이 가능함. 
+- 예: `attacker.victim.com`에서 XSS로 JS를 실행해서 `victim.com`으로 요청을 보내서 CSRF 공격
 
 
