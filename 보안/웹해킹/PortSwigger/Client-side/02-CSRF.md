@@ -259,11 +259,11 @@ HTTP 응답에 `SameSite` 속성을 추가하면 설정할 수 있음.
 Set-Cookie: session=0F8tgdOhi9ynR1M9wa3ODa; SameSite=Strict
 ```
 
-| 값        | 같은 사이트 요청 | cross-site top-level GET | cross-site POST / iframe / AJAX |
-| -------- | --------- | ------------------------ | ------------------------------- |
-| `Strict` | 전송        | 미전송                      | 미전송                             |
-| `Lax`    | 전송        | 전송                       | 미전송                             |
-| `None`   | 전송        | 전송                       | 전송 (`Secure` 필수)                |
+| 값        | same-site 요청 | cross-site top-level GET | cross-site POST / iframe / AJAX |
+| -------- | ------------ | ------------------------ | ------------------------------- |
+| `Strict` | 전송           | 미전송                      | 미전송                             |
+| `Lax`    | 전송           | 전송                       | 미전송                             |
+| `None`   | 전송           | 전송                       | 전송 (`Secure` 필수)                |
 - top-level: 주소 표시줄의 URL이 바뀌는 네비게이션 
 	- 예: 링크 클릭, 주소 입력, 폼 제출, 리다이렉트 
 - subresouce: 주소 표시줄의 URL이 바뀌지 않고 페이지 안에 존재
