@@ -115,3 +115,32 @@ onload="if(!window.x)this.src='https://target.com';window.x=1;">
 - `<iframe>`으로 쿠키를 지정하는 URL로 악성 스크립트를 쿠키로 지정
 - `onload` 이벤트로 페이지가 로드되면 (쿠키가 지정되면) 새로운 화면을 보여으로써 그 화면에 출력된 악성 스크립트가 실행됨. 
 
+
+### JavaScript 삽입
+
+DOM 기반 JavaScript 삽입은 공격자가 제어할 수 있는 데이터를 JavaScript로 실행하는 경우 발생함. 
+
+**예시**
+
+- `eval()`
+``` js
+// URL의 해시(#) 부분을 읽어옵니다. (예: #alert(1))
+let code = location.hash.slice(1); // '#alert(1)'에서 '#'을 떼어냄
+
+// 사용자가 입력한 값을 그대로 eval()로 실행합니다.
+if (code) {
+  eval(code);
+}
+```
+
+- `setTimeout()`
+``` js
+// URL 쿼리 스트링에서 'callback' 파라미터를 읽어옵니다.
+// 예: ?callback=alert(1)
+let callback = new URLSearchParams(location.search).get('callback');
+
+// setTimeout의 첫 번째 인자로 문자열을 전달하면, 그 문자열을 코드로 실행합니다.
+if (callback) {
+  setTimeout(callback, 1000); // 1초 뒤에 실행
+}
+```
