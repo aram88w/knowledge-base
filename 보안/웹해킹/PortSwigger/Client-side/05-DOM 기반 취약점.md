@@ -100,7 +100,7 @@ window.addEventListener("message", (e) => {
 #### 취약점
 
 웹 메세지의 출처를 검사하지 않거나 검사를 하더라도 우회가 가능한 경우 공격자의 서버에서 악성 웹 메시지를 보낼 수 있음. 
-공격자가 제어할 수 있는 데이터를 `eval()`로 실행한다거나 하는 코드가 있으면 XSS가 발생함. 
+공격자가 제어할 수 있는 데이터를 `eval()`로 실행한다거나 하는 코드가 있으면 XSS가 발생함.
 
 ``` html
 <script>
@@ -195,7 +195,7 @@ https://www.innocent-website.com/example#https://www.evil-user.net
 
 ### 쿠키 조작
 
-DOM 기반 쿠키 조작은 공격자가 제어할 수 있는 데이터를 쿠키의 값에 기록하는 경우 발생함. 
+DOM 기반 쿠키 조작은 공격자가 제어할 수 있는 데이터를 쿠키의 값에 기록하는 경우 발생
 
 **예시**
 `/product` 페이지에서 경로가 쿠키로 지정되고 해당 쿠키 값을 화면에 출력하는 경우 
@@ -216,7 +216,7 @@ onload="if(!window.x)this.src='https://target.com';window.x=1;">
 
 ### JavaScript 삽입
 
-DOM 기반 JavaScript 삽입은 공격자가 제어할 수 있는 데이터를 JavaScript로 실행하는 경우 발생함. 
+DOM 기반 JavaScript 삽입은 공격자가 제어할 수 있는 데이터를 JavaScript로 실행하는 경우 발생 
 
 **예시**
 
@@ -254,7 +254,7 @@ if (callback) {
 
 ### 웹소켓 URL 조작
 
-DOM 기반 웹소켓 URL 조작은 공격자가 제어할 수 있는 데이터가 웹소켓 연결 대상 URL로 들어가는 경우 발생함. 
+DOM 기반 웹소켓 URL 조작은 공격자가 제어할 수 있는 데이터가 웹소켓 연결 대상 URL로 들어가는 경우 발생
 공격자는 자신의 서버와 웹소켓을 연결하고 타겟 사이트의 민감한 데이터를 받거나 서버의 데이터로 타겟 사이트를 조작할 수 있음. 
 
 **예시**
@@ -289,5 +289,68 @@ document.getElementById("loginForm").action = redirectUrl;
 3. `element.src` 조작: `<script>`, `<img>`, `<iframe>` 등의 리소스 주소를 바꿈.
 	- 공격자의 서버로 이미지를 요청하도록 할 수 있음.
 	- `src`에 `javascript:`를 넣으면 XSS가 터질 수 있음.
+
+
+### Ajax 요청 헤더 조작
+
+DOM 기반 Ajax 요청 헤더 조작은 공격자가 제어할 수 있는 데이터가 `XMLHttpRequest`나 `fetch`의 헤더 설정을 하는 경우 발생
+
+
+### 로컬 파일 경로 조작
+
+DOM 기반 로컬 파일 경로 조작은 공격자가 제어할 수 있는 데이터를 파일 처리 API의 매개변수 `filename` 매개변수로 전달할때 발생
+
+웹사이트가 그 파일을 어떻게 사용하느냐에 따라 공격의 영향이 달라짐. 
+- 파일을 읽어서 화면에 표시하거나 서버로 전송하는 기능이 있으면 → **데이터 유출 가능**
+- 파일에 데이터를 쓰는 기능이 있으면 → **덮어쓰기/조작 가능**
+- 파일 경로를 받는 기능만 있고 아무 데도 안 쓰면 → 영향 없음
+
+**예시**
+``` js
+// URL: https://site.com/app#file=/etc/passwd
+const filename = new URLSearchParams(location.hash.slice(1)).get('file');
+
+const reader = new FileReader();
+// filename을 그대로 사용
+reader.readAsText(filename); // 🚨 싱크
+```
+
+
+### 클라이언트 측 SQL 삽입
+
+공격자가 제어하는 데이터를 클라이언트 측 SQL 쿼리에 포함 시키는 경우 발생함. 공격자는 다른 사용자가 해당 URL을 방문할 경우 해당 사용자의 브라우저 내의 **로컬 SQL 데이터베이스**에서 임의의 SQL 쿼리를 실행할 수 있음. 
+
+**로컬 SQL 데이터베이스**
+브라우저 안에서 SQL을 기반으로 데이터를 저장하는 데이터베이스로 현대의 브라우저(크롬, 사파리 등)에서는 IndexedDB로 전환이 되어 거의 사라졌지만 특정 환경에서는 여전히 사용됨
+1. **Electron 데스크톱 앱**: Slack, Discord, VS Code, Notion 등 수많은 데스크톱 앱이 Electron으로 만들어지고 이 앱들은 내부적으로 로컬 **SQLite**를 사용함.
+2. SQLite WASM을 쓰는 최신 웹 앱: **Local-First 웹 앱**(예: 오프라인 문서 편집기, 로컬 데이터 분석 도구)은 브라우저 안에서 SQLite를 WebAssembly로 돌림.
+
+
+### HTML5 저장소 조작
+
+DOM 기반 HTML5 저장소 조작은 공격자가 제어하는 데이터를 localStorage, sessionStorage에 저장하는 경우 발생함. 이것만으로는 취약점이 되지는 않고 공격자의 데이터가 다른 곳에서 취약점으로 이용되는 경우에 취약점이 됨. 
+
+``` js
+sessionStorage.setItem()
+localStorage.setItem()
+```
+
+참고: localStorage, sessionStorage는 **출처(origin)별로 저장**이 되기 때문에 공격자가 데이터를 넣은 사이트에서 그 데이터를 안전하지 않게 꺼내 쓰는 취약점이 있어야함. 
+
+| 저장소 | 범위 | 지속성 |
+|---|---|---|
+| localStorage | origin별 | 브라우저를 닫아도 유지 |
+| sessionStorage | origin별 + 탭/창별 | 탭을 닫으면 삭제 |
+| 쿠키 | 도메인별 (path, secure 등 추가 조건) | 만료 기간까지 
+
+### XPath 주입
+
+XPath는 XML/HTLM 문서에서 요소를 선택하는 언어임.
+DOM 기반 XPath 삽입 취약점은 공격자가 제어할 수 있는 데이터를 XPath 쿼리에 포함시킬 때 발생
+
+``` js
+document.evaluate()
+element.evaluate()
+```
 
 
