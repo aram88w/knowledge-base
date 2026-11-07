@@ -1,8 +1,9 @@
-## Image Uploader
-
-- 유형: Web
-- 해결 방식: 구글 검색 (취약점)
-
+---
+tier: Bronze 2
+topics:
+  - File Upload
+solved-with: Research
+---
 ### 문제구조
 
 목표: `/uploads` 폴더 외부의 `/flag.txt` 읽기

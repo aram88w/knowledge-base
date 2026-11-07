@@ -1,8 +1,9 @@
-## Are you admin?
-
-- 유형: Web
-- 해결 방식: 혼자 해결, 구글 검색 (fetch 스크립트)
-
+---
+tier: Bronze 1
+topics:
+  - "\bXSS"
+solved-with: Self
+---
 ### 문제 구조
 
 목표: 크롬 봇이 `/whoami`로 접속할때 반환되는 플래그가 포함된 페이지에 접근

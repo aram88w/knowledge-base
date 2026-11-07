@@ -1,3 +1,9 @@
+---
+tier: Bronze 4
+topics:
+  - Brute Force
+solved-with: Self
+---
 ### 문제 구조
 
 아이디(영어 소문자+숫자 4글자), 비밀번호(100~200)을 맞춰야함. 

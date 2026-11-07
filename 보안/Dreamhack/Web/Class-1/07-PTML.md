@@ -1,8 +1,10 @@
-## PTML
-
-- 유형: Web
-- 해결방식: 혼자 해결, 옵시디언 참고(svg XSS 스크립트)
-
+---
+tier: Bronze 1
+topics:
+  - "\bXSS"
+  - File Upload
+solved-with: Self
+---
 ### 문제 구조
 
 목표: 크롬 봇이 업로드한 svg 파일에 접근할때 쿠키를 내 서버로 보내기

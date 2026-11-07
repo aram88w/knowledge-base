@@ -1,8 +1,9 @@
-## Really Not SQL
-
-- 유형: Web
-- 해결: 혼자 해결
-
+---
+tier: Bronze 1
+topics:
+  - Apache
+solved-with: Self
+---
 ### 문제 구조
 
 목표: admin 계정 세션을 획득 후 `/flag.php`로 접근

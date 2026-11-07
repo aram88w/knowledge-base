@@ -1,3 +1,9 @@
+---
+tier: "\bSilver 1"
+topics:
+  - "\bXSS"
+solved-with: AI-Hint
+---
 ### 문제 구조
 
 - `/vuln`: param 쿼리 파라미터를 받아서 HTML에 삽입함. XSS 취약점이 존재

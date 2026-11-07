@@ -1,3 +1,9 @@
+---
+tier: Bronze 3
+topics:
+  - IDOR
+solved-with: Self
+---
 ### 문제 구조
 
 게시글을 MongoDB로 저장하고 id를 기반으로 글을 불러오는데 플래그가 숨겨진 비밀글은 게시글 목록에서 id를 감춰서 보여줌.

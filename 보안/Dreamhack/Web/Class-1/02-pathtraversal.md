@@ -1,3 +1,9 @@
+---
+tier: Bronze 4
+topics:
+  - Path traversal
+solved-with: Self
+---
 ### 문제 구조
 
 `/get_info`에서 받는 `userid`를 검사하지 않고 내부 API 요청 URL에 그대로 삽입함. 
