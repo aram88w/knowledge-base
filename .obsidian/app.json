@@ -4,5 +4,6 @@
   "showLineNumber": true,
   "readableLineLength": false,
   "livePreview": true,
-  "smartIndentList": true
+  "smartIndentList": true,
+  "alwaysUpdateLinks": true
 }
