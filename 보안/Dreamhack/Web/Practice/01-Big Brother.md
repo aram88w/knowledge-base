@@ -1,5 +1,5 @@
 ---
-tier: "\bSilver 1"
+tier: Silver 1
 topics:
   - "\bXSS"
 solved-with: AI-Hint

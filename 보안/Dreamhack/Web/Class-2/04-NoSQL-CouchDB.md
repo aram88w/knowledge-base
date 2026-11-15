@@ -1,5 +1,5 @@
 ---
-tier: "\bSilver 4"
+tier: Silver 4
 topics:
   - NoSQL Injection
   - CouchDB

@@ -1,5 +1,5 @@
 ---
-tier: "\bSilver 4"
+tier: Silver 4
 topics:
   - CSRF
 solved-with: Self
